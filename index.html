@@ -8,20 +8,25 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/styles.css">
+<link rel="stylesheet" href="assets/styles.css?v=14">
 </head>
 <body>
 
 <header>
   <div class="wrap nav-row">
     <a class="brand" href="index.html" aria-label="YouthNet home">
-      <span class="brand-mark">
-        <svg viewBox="0 0 40 40" fill="none"><path d="M0 0H40V40L0 0Z" fill="#FCB92B"/><path d="M40 40H0V0L40 40Z" fill="#0E553D"/></svg>
-      </span>
-      <span>
-        <span class="brand-word" style="display:block;">YouthNet</span>
-        <span class="brand-sub">est. 2006 &middot; Nagaland</span>
-      </span>
+      <div class="brand-logo">
+        <span class="brand-mark">
+          <svg viewBox="0 0 40 40" fill="none"><path d="M0 0H40V40L0 0Z" fill="#FCB92B"/><path d="M40 40H0V0L40 40Z" fill="#0E553D"/></svg>
+        </span>
+        <span>
+          <span class="brand-word" style="display:block;">YouthNet</span>
+          <span class="brand-sub">est. 2006 &middot; Nagaland</span>
+        </span>
+      </div>
+      <div class="tagline">
+        <span class="tagline-text">Twenty years in the Northeast</span>
+      </div>
     </a>
     <nav class="primary" id="primaryNav">
       <div class="nav-drop">
@@ -68,17 +73,16 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-loom" id="heroLoom" aria-hidden="true"></div>
     <div class="wrap hero-inner">
       <div class="hero-tag reveal"><span class="eyebrow">Twenty years in the Northeast</span></div>
       <h1 class="hero-title reveal">Threads of change, <em>woven</em> by youth.</h1>
-      <p class="hero-sub reveal">Since 2006, YouthNet has organised education, livelihoods, enterprise and environmental action across all 17 districts of Nagaland and all 8 states of the Northeast — one community at a time.</p>
+      <p class="hero-sub reveal">Since 2006, YouthNet has organised education and livelihoods across the Northeast.</p>
       <div class="hero-actions reveal">
         <a class="btn btn-gold" href="#what-we-do">See our work <span class="btn-arrow">→</span></a>
-        <a class="btn btn-line" href="#presence">294,300 lives impacted <span class="btn-arrow">→</span></a>
+        <a class="btn btn-line" href="#who-we-are">294,300 lives impacted <span class="btn-arrow">→</span></a>
       </div>
+      <div class="hero-scroll-cue" aria-hidden="true"><span>Scroll</span><span class="line"></span></div>
     </div>
-    <div class="hero-scroll-cue" aria-hidden="true"><span>Scroll</span><span class="line"></span></div>
   </section>
 
   <div class="woven-divider" id="wovenTop"></div>
@@ -88,7 +92,9 @@
     <div class="wrap stats-head reveal">
       <span class="eyebrow">By the numbers</span>
       <h2>Twenty years of impact, made together</h2>
-      <div class="section-cta" style="margin-top:14px;"><a class="link-arrow" href="who-we-are.html">Learn who we are <span>→</span></a></div>
+      <div class="stats-actions">
+        <a class="link-arrow" href="who-we-are.html">Learn who we are <span>→</span></a>
+      </div>
     </div>
     <div class="wrap">
       <div class="stats-grid reveal">
@@ -102,7 +108,7 @@
         <div class="stat-cell total"><div class="stat-num" data-count="294300">0</div><div class="stat-label">Total impacted</div></div>
       </div>
     </div>
-    <div class="stats-foot">Figures represent cumulative reach across all programmes, 2006 – present</div>
+    <div class="wrap stats-foot">Figures represent cumulative reach across all programmes, 2006 – present</div>
   </section>
 
   <!-- PRESENCE -->
@@ -360,13 +366,13 @@
     <div class="marquee" aria-hidden="true">
       <span class="p-logo"><span class="dot"></span>Government Partners</span>
       <span class="p-logo"><span class="dot"></span>Corporate Funders</span>
-      <span class="p-logo"><span class="dot"></span>UN &amp; INGOs</span>
+      <span class="p-logo"><span class="dot"></span>UN &amp; NGOs</span>
       <span class="p-logo"><span class="dot"></span>Academic Institutions</span>
       <span class="p-logo"><span class="dot"></span>Recruiting Partners</span>
       <span class="p-logo"><span class="dot"></span>Foundations</span>
       <span class="p-logo"><span class="dot"></span>Government Partners</span>
       <span class="p-logo"><span class="dot"></span>Corporate Funders</span>
-      <span class="p-logo"><span class="dot"></span>UN &amp; INGOs</span>
+      <span class="p-logo"><span class="dot"></span>UN &amp; NGOs</span>
       <span class="p-logo"><span class="dot"></span>Academic Institutions</span>
       <span class="p-logo"><span class="dot"></span>Recruiting Partners</span>
       <span class="p-logo"><span class="dot"></span>Foundations</span>
@@ -452,6 +458,6 @@
   </div>
 </footer>
 
-<script src="assets/script.js"></script>
+<script src="assets/script.js?v=15"></script>
 </body>
 </html>
