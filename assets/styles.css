@@ -315,7 +315,7 @@ h1.hero-title em{font-style:normal; color:var(--ink);}
 .stat-cell.total{background:var(--green-deep);}
 .stat-cell.total .stat-num{color:var(--cream); font-size:clamp(1.9rem,3.3vw,2.7rem);}
 .stat-cell.total .stat-label{color:rgba(251,246,234,0.85);}
-.stats-foot{padding-top:22px; padding-bottom:40px; text-align:left; font-size:12.5px; color:var(--ink-soft); font-family:var(--mono); letter-spacing:0.02em;}
+.stats-foot{padding-top:22px; padding-bottom:0px; text-align:left; font-size:12.5px; color:var(--ink-soft); font-family:var(--mono); letter-spacing:0.02em;}
 @media (max-width:640px){
   .stat-cell{padding:20px 16px;}
   .stats-actions{flex-direction:column; align-items:flex-start;}
@@ -360,6 +360,7 @@ h1.hero-title em{font-style:normal; color:var(--ink);}
 .chip{transition:background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease); cursor:default;}
 .chip.active{background:var(--gold); border-color:var(--gold); color:var(--ink);}
 .chip-row.numbered .chip.active i{background:var(--ink); color:var(--gold);}
+.presence-card.northeast .chip-row.numbered .chip i{background:var(--green-deep);}
 @media (max-width:640px){
   .chip-row{grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px;}
   .chip{font-size:12px; padding:8px 9px;}
