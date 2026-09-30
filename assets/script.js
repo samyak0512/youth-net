@@ -205,4 +205,212 @@
       c.addEventListener('click', function(){ setActive(c.getAttribute('data-slug')); });
     });
   });
+
+  // ---- Live YJC job listings (WP Job Manager REST) ----
+  var jobRoot = document.getElementById('jobListings');
+  if(jobRoot){
+    var JOBS_API = 'https://www.youthnet.org.in/wp-json/wp/v2/job-listings';
+    var JOBS_EMAIL = 'ops.yjc@gmail.com';
+    var perPage = 8;
+    var page = 1;
+    var loading = false;
+    var totalPages = 1;
+    var maxPages = 5;
+    var jobsById = {};
+    var lastFocus = null;
+    var listEl = jobRoot.querySelector('.job-list');
+    var statusEl = jobRoot.querySelector('.job-status');
+    var moreBtn = jobRoot.querySelector('.job-more');
+    var modal = document.getElementById('jobModal');
+    var modalTitle = document.getElementById('jobModalTitle');
+    var modalMeta = document.getElementById('jobModalMeta');
+    var modalBody = document.getElementById('jobModalBody');
+    var modalApply = document.getElementById('jobModalApply');
+    var modalDialog = modal ? modal.querySelector('.job-modal-dialog') : null;
+
+    function decodeHtml(s){
+      var t = document.createElement('textarea');
+      t.innerHTML = s || '';
+      return t.value;
+    }
+    function cleanTitle(s){
+      return decodeHtml(s)
+        .replace(/\s*Job Vacancy in\s+.+$/i, '')
+        .replace(/\s+Job\s*$/i, '')
+        .trim();
+    }
+    function formatDate(iso){
+      var d = new Date(iso);
+      if(isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('en-IN', {day:'numeric', month:'short', year:'numeric'});
+    }
+    function esc(s){
+      return String(s || '').replace(/[&<>"']/g, function(c){
+        return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      });
+    }
+    function jobTitle(job){
+      return cleanTitle(job && job.title && job.title.rendered);
+    }
+    function jobLocation(job){
+      return (job && job.meta && job.meta._job_location) || 'Location on request';
+    }
+    function jobApplyHref(job){
+      var apply = (job && job.meta && job.meta._application) || JOBS_EMAIL;
+      return 'mailto:' + apply + '?subject=' + encodeURIComponent('Application: ' + jobTitle(job));
+    }
+    function sanitizeJobHtml(html){
+      var doc = new DOMParser().parseFromString(html || '', 'text/html');
+      doc.querySelectorAll('script,style,iframe,object,embed,form,link,meta,noscript').forEach(function(el){ el.remove(); });
+      doc.body.querySelectorAll('*').forEach(function(el){
+        Array.from(el.attributes).forEach(function(attr){
+          var n = attr.name.toLowerCase();
+          if(n.indexOf('on') === 0 || n === 'style' || n === 'class' || n === 'id' || n === 'src' || n === 'srcset'){
+            el.removeAttribute(attr.name);
+          }
+        });
+        if(el.tagName === 'A'){
+          var href = el.getAttribute('href') || '';
+          if(!/^(mailto:|tel:)/i.test(href)){
+            el.removeAttribute('href');
+            el.removeAttribute('target');
+            el.removeAttribute('rel');
+          }
+        }
+      });
+      return doc.body.innerHTML.trim();
+    }
+    function setStatus(msg, isError){
+      if(!statusEl) return;
+      statusEl.hidden = !msg;
+      statusEl.textContent = msg || '';
+      statusEl.classList.toggle('is-error', !!isError);
+    }
+    function closeJobModal(){
+      if(!modal) return;
+      modal.classList.remove('is-open');
+      modal.hidden = true;
+      document.body.classList.remove('job-modal-open');
+      if(lastFocus && lastFocus.focus) lastFocus.focus();
+      lastFocus = null;
+    }
+    function fillJobModal(job){
+      var title = jobTitle(job);
+      var loc = jobLocation(job);
+      var date = formatDate(job.date);
+      var body = sanitizeJobHtml(job.content && job.content.rendered);
+      modalTitle.textContent = title;
+      modalMeta.textContent = [loc, date ? 'Posted ' + date : ''].filter(Boolean).join(' · ');
+      modalBody.innerHTML = body || '<p>Write to ' + esc(JOBS_EMAIL) + ' for the full description of this opening.</p>';
+      modalApply.href = jobApplyHref(job);
+    }
+    function openJobModal(id, trigger){
+      if(!modal) return;
+      var job = jobsById[id];
+      if(!job) return;
+      lastFocus = trigger || document.activeElement;
+      fillJobModal(job);
+      modal.hidden = false;
+      modal.classList.add('is-open');
+      document.body.classList.add('job-modal-open');
+      if(modalDialog) modalDialog.focus();
+      var hasContent = job.content && job.content.rendered && job.content.rendered.replace(/<[^>]+>/g, '').trim();
+      if(!hasContent){
+        modalBody.innerHTML = '<p>Loading full description&hellip;</p>';
+        fetch(JOBS_API + '/' + encodeURIComponent(id) + '?_fields=id,date,title,content,meta')
+          .then(function(res){ if(!res.ok) throw new Error('missing'); return res.json(); })
+          .then(function(full){
+            jobsById[id] = full;
+            if(modal.classList.contains('is-open')) fillJobModal(full);
+          })
+          .catch(function(){
+            if(modal.classList.contains('is-open')){
+              modalBody.innerHTML = '<p>Write to ' + esc(JOBS_EMAIL) + ' for the full description of this opening.</p>';
+            }
+          });
+      }
+    }
+    function renderJobs(jobs){
+      var html = jobs.map(function(job){
+        jobsById[job.id] = job;
+        var title = jobTitle(job);
+        var loc = jobLocation(job);
+        var date = formatDate(job.date);
+        return '<article class="job-card" data-job-id="' + esc(String(job.id)) + '">' +
+          '<div>' +
+            '<h3><button type="button" class="job-open" data-job-id="' + esc(String(job.id)) + '">' + esc(title) + '</button></h3>' +
+            '<div class="job-meta">' +
+              '<span>' + esc(loc) + '</span>' +
+              (date ? '<span>Posted ' + esc(date) + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<div class="job-card-actions">' +
+            '<button type="button" class="btn btn-line job-open" data-job-id="' + esc(String(job.id)) + '">Details</button>' +
+            '<a class="btn btn-gold" href="' + esc(jobApplyHref(job)) + '">Apply</a>' +
+          '</div>' +
+        '</article>';
+      }).join('');
+      listEl.insertAdjacentHTML('beforeend', html);
+    }
+    function load(){
+      if(loading) return;
+      loading = true;
+      if(moreBtn) moreBtn.disabled = true;
+      if(page === 1) setStatus('Loading current openings…');
+      var url = JOBS_API + '?per_page=' + perPage + '&page=' + page + '&orderby=date&order=desc&_fields=id,date,title,content,meta';
+      fetch(url).then(function(res){
+        if(!res.ok) throw new Error('Could not load listings');
+        totalPages = parseInt(res.headers.get('X-WP-TotalPages'), 10) || 1;
+        return res.json();
+      }).then(function(jobs){
+        if(!jobs || !jobs.length){
+          if(page === 1) setStatus('No current openings are listed right now. Write to ' + JOBS_EMAIL + ' to register or enquire.');
+          if(moreBtn) moreBtn.hidden = true;
+          return;
+        }
+        setStatus('');
+        renderJobs(jobs);
+        var canMore = page < totalPages && page < maxPages;
+        if(moreBtn){
+          moreBtn.hidden = !canMore;
+          moreBtn.disabled = false;
+        }
+        page += 1;
+      }).catch(function(){
+        setStatus('Listings could not be loaded just now. Write to ' + JOBS_EMAIL + ' or visit a Job Centre office for current openings.', true);
+        if(moreBtn) moreBtn.hidden = true;
+      }).then(function(){ loading = false; });
+    }
+    if(listEl){
+      listEl.addEventListener('click', function(e){
+        var btn = e.target.closest('.job-open');
+        if(!btn) return;
+        openJobModal(btn.getAttribute('data-job-id'), btn);
+      });
+    }
+    if(modal){
+      modal.addEventListener('click', function(e){
+        if(e.target.closest('[data-close-job-modal]')) closeJobModal();
+      });
+      document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape' && modal.classList.contains('is-open')) closeJobModal();
+      });
+    }
+    if(moreBtn) moreBtn.addEventListener('click', load);
+    load();
+  }
+
+  // ---- Contact form: jobs enquiries go to the YJC desk ----
+  var contactForm = document.querySelector('form[action^="mailto:"]');
+  if(contactForm){
+    var reason = contactForm.querySelector('#reason');
+    function syncMailto(){
+      var jobs = reason && /job/i.test(reason.value || '');
+      contactForm.setAttribute('action', jobs ? 'mailto:ops.yjc@gmail.com' : 'mailto:youthnet@youthnet.org.in');
+    }
+    if(reason){
+      reason.addEventListener('change', syncMailto);
+      syncMailto();
+    }
+  }
 })();
