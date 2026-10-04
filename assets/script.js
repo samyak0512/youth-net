@@ -206,16 +206,16 @@
     });
   });
 
-  // ---- Live YJC job listings (WP Job Manager REST) ----
+  // ---- YJC job listings from a local snapshot (no old-site calls) ----
   var jobRoot = document.getElementById('jobListings');
   if(jobRoot){
-    var JOBS_API = 'https://www.youthnet.org.in/wp-json/wp/v2/job-listings';
+    var JOBS_DATA = 'assets/jobs.json';
+    var JOBS_EMBEDDED = window.YOUTHNET_JOBS;
     var JOBS_EMAIL = 'ops.yjc@gmail.com';
     var perPage = 8;
     var page = 1;
     var loading = false;
-    var totalPages = 1;
-    var maxPages = 5;
+    var allJobs = [];
     var jobsById = {};
     var lastFocus = null;
     var listEl = jobRoot.querySelector('.job-list');
@@ -314,21 +314,6 @@
       modal.classList.add('is-open');
       document.body.classList.add('job-modal-open');
       if(modalDialog) modalDialog.focus();
-      var hasContent = job.content && job.content.rendered && job.content.rendered.replace(/<[^>]+>/g, '').trim();
-      if(!hasContent){
-        modalBody.innerHTML = '<p>Loading full description&hellip;</p>';
-        fetch(JOBS_API + '/' + encodeURIComponent(id) + '?_fields=id,date,title,content,meta')
-          .then(function(res){ if(!res.ok) throw new Error('missing'); return res.json(); })
-          .then(function(full){
-            jobsById[id] = full;
-            if(modal.classList.contains('is-open')) fillJobModal(full);
-          })
-          .catch(function(){
-            if(modal.classList.contains('is-open')){
-              modalBody.innerHTML = '<p>Write to ' + esc(JOBS_EMAIL) + ' for the full description of this opening.</p>';
-            }
-          });
-      }
     }
     function renderJobs(jobs){
       var html = jobs.map(function(job){
@@ -352,31 +337,51 @@
       }).join('');
       listEl.insertAdjacentHTML('beforeend', html);
     }
+    function showPage(){
+      var start = (page - 1) * perPage;
+      var slice = allJobs.slice(start, start + perPage);
+      if(!slice.length){
+        if(page === 1) setStatus('No current openings are listed right now. Write to ' + JOBS_EMAIL + ' to register or enquire.');
+        if(moreBtn) moreBtn.hidden = true;
+        return;
+      }
+      setStatus('');
+      renderJobs(slice);
+      page += 1;
+      if(moreBtn){
+        moreBtn.hidden = start + perPage >= allJobs.length;
+        moreBtn.disabled = false;
+      }
+    }
+    function jobsFromPayload(data){
+      return (data && data.jobs) || (Array.isArray(data) ? data : []);
+    }
     function load(){
       if(loading) return;
-      loading = true;
-      if(moreBtn) moreBtn.disabled = true;
-      if(page === 1) setStatus('Loading current openings…');
-      var url = JOBS_API + '?per_page=' + perPage + '&page=' + page + '&orderby=date&order=desc&_fields=id,date,title,content,meta';
-      fetch(url).then(function(res){
-        if(!res.ok) throw new Error('Could not load listings');
-        totalPages = parseInt(res.headers.get('X-WP-TotalPages'), 10) || 1;
-        return res.json();
-      }).then(function(jobs){
-        if(!jobs || !jobs.length){
-          if(page === 1) setStatus('No current openings are listed right now. Write to ' + JOBS_EMAIL + ' to register or enquire.');
+      if(allJobs.length){
+        showPage();
+        return;
+      }
+      function useJobs(data){
+        allJobs = jobsFromPayload(data);
+        if(!allJobs.length){
+          setStatus('No current openings are listed right now. Write to ' + JOBS_EMAIL + ' to register or enquire.');
           if(moreBtn) moreBtn.hidden = true;
           return;
         }
-        setStatus('');
-        renderJobs(jobs);
-        var canMore = page < totalPages && page < maxPages;
-        if(moreBtn){
-          moreBtn.hidden = !canMore;
-          moreBtn.disabled = false;
-        }
-        page += 1;
-      }).catch(function(){
+        showPage();
+      }
+      if(JOBS_EMBEDDED){
+        useJobs(JOBS_EMBEDDED);
+        return;
+      }
+      loading = true;
+      if(moreBtn) moreBtn.disabled = true;
+      setStatus('Loading current openings…');
+      fetch(JOBS_DATA).then(function(res){
+        if(!res.ok) throw new Error('Could not load listings');
+        return res.json();
+      }).then(useJobs).catch(function(){
         setStatus('Listings could not be loaded just now. Write to ' + JOBS_EMAIL + ' or visit a Job Centre office for current openings.', true);
         if(moreBtn) moreBtn.hidden = true;
       }).then(function(){ loading = false; });
